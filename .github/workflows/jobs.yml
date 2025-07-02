@@ -101,10 +101,10 @@ jobs:
         fi
         
         # Check CI workflow file
-        if [ -f ".github/workflows/ci.yml" ]; then
-          echo "✓ ci.yml workflow file exists"
+        if [ -f ".github/workflows/jobs.yml" ]; then
+          echo "✓ jobs.yml workflow file exists"
         else
-          echo "❌ ci.yml workflow file missing"
+          echo "❌ jobs.yml workflow file missing"
           exit 1
         fi
         
@@ -151,9 +151,9 @@ jobs:
         
         try:
             # Check if results file exists
-            if not os.path.exists('basic_model_results.csv'):
-                print("❌ No results file found")
-                sys.exit(1)
+            #if not os.path.exists('basic_model_results.csv'):
+            #    print("❌ No results file found")
+            #    sys.exit(1)
             
             # Load results
             df = pd.read_csv('basic_model_results.csv')

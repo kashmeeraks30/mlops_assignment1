@@ -37,8 +37,8 @@ jobs:
     
     - name: Test imports and basic functionality
       run: |
-        python -c "import utils; print('✓ Utils module imported successfully')"
-        python -c "import regression; print('✓ Regression module imported successfully')"
+        python -c "import utils; print('Utils module imported successfully')"
+        python -c "import regression; print('Regression module imported successfully')"
     
     - name: Run basic regression models (reg_branch functionality)
       if: github.ref == 'refs/heads/reg_branch' || github.ref == 'refs/heads/main'
@@ -55,11 +55,11 @@ jobs:
     - name: Check output files
       run: |
         if [ -f "basic_model_results.csv" ]; then
-          echo "✓ Basic model results file created"
+          echo "Basic model results file created"
           head basic_model_results.csv
         fi
         if [ -f "hypertuned_model_results.csv" ]; then
-          echo "✓ Hypertuned model results file created"
+          echo "Hypertuned model results file created"
           head hypertuned_model_results.csv
         fi
     
@@ -85,30 +85,30 @@ jobs:
         required_files=("utils.py" "regression.py" "requirements.txt" "README.md")
         for file in "${required_files[@]}"; do
           if [ -f "$file" ]; then
-            echo "✓ $file exists"
+            echo "$file exists"
           else
-            echo "❌ $file missing"
+            echo "$file missing"
             exit 1
           fi
         done
         
         # Check .github/workflows directory
         if [ -d ".github/workflows" ]; then
-          echo "✓ .github/workflows directory exists"
+          echo ".github/workflows directory exists"
         else
-          echo "❌ .github/workflows directory missing"
+          echo ".github/workflows directory missing"
           exit 1
         fi
         
         # Check CI workflow file
         if [ -f ".github/workflows/jobs.yml" ]; then
-          echo "✓ jobs.yml workflow file exists"
+          echo "jobs.yml workflow file exists"
         else
-          echo "❌ jobs.yml workflow file missing"
+          echo "jobs.yml workflow file missing"
           exit 1
         fi
         
-        echo "✅ Repository structure validation passed"
+        echo "Repository structure validation passed"
 
   model-performance:
     runs-on: ubuntu-latest
@@ -159,7 +159,7 @@ jobs:
             df = pd.read_csv('basic_model_results.csv')
             
             # Validate performance thresholds
-            print("📊 Performance Validation:")
+            print("Performance Validation:")
             
             for _, row in df.iterrows():
                 model_name = row['Model']
@@ -174,14 +174,14 @@ jobs:
                 if test_r2 < 0:
                     print(f"⚠️  Warning: {model_name} has negative R² score")
                 elif test_r2 > 0.5:
-                    print(f"✅ {model_name} shows good performance (R² > 0.5)")
+                    print(f"{model_name} shows good performance (R² > 0.5)")
                 else:
-                    print(f"📋 {model_name} shows moderate performance")
+                    print(f" {model_name} shows moderate performance")
             
             print("✅ Performance validation completed")
             
         except Exception as e:
-            print(f"❌ Performance validation failed: {e}")
+            print(f"Performance validation failed: {e}")
             sys.exit(1)
         EOF
     

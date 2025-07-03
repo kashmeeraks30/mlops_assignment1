@@ -1,1 +1,1 @@
-# mlops_assignment1
+This branch contains code that performs comparison between three different regression models namely Linear Regression, Random Forest and Gradient Boosting for the dependent variable which is the house price available in Boston Housing Dataset. The comparison is performed based on Mean Square Error(MSE) and R square. The code regression.py is automated along with a set of jobs as an automated workflow. 

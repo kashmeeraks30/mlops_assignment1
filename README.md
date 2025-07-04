@@ -1,1 +1,4 @@
-This branch contains code that performs comparison between three different regression models namely Linear Regression, Random Forest and Gradient Boosting for the dependent variable which is the house price available in Boston Housing Dataset. The comparison is performed based on Mean Square Error(MSE) and R square. The code regression.py is automated along with a set of jobs as an automated workflow. 
+This branch contains code that performs comparison between three different regression models namely Ridge, Random Forest, Lasso and SVR for the dependent variable which is the house price available in Boston Housing Dataset. The comparison is performed based on Mean Square Error(MSE) and R square before and after applying the hyperparameter tuning. CI/CI pipeline is automated using GitHub Actions and is triggered with every push operation.
+Usage: Checkout the code and run the following: 
+pip install -r requirements.txt 
+python regression.py

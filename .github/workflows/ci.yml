@@ -1,0 +1,194 @@
+name: Boston Housing Regression CI
+
+on:
+  push:
+    branches: [ main, reg_branch, hyper_branch ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Test imports and basic functionality
+      run: |
+        python -c "import utils; print('Utils module imported successfully')"
+        python -c "import regression; print('Regression module imported successfully')"
+    
+    - name: Run basic regression models (reg_branch functionality)
+      if: github.ref == 'refs/heads/reg_branch' || github.ref == 'refs/heads/main'
+      run: |
+        export ENABLE_HYPERPARAMETER_TUNING=false
+        python regression.py
+    
+    - name: Run hyperparameter tuning (hyper_branch functionality)
+      if: github.ref == 'refs/heads/hyper_branch' || github.ref == 'refs/heads/main'
+      run: |
+        export ENABLE_HYPERPARAMETER_TUNING=true
+        python regression.py
+    
+    - name: Check output files
+      run: |
+        if [ -f "basic_model_results.csv" ]; then
+          echo "Basic model results file created"
+          head basic_model_results.csv
+        fi
+        if [ -f "hypertuned_model_results.csv" ]; then
+          echo "Hypertuned model results file created"
+          head hypertuned_model_results.csv
+        fi
+    
+    - name: Upload results as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-results-${{ matrix.python-version }}
+        path: |
+          *.csv
+          *.png
+        retention-days: 30
+
+  validate-structure:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate repository structure
+      run: |
+        echo "Checking repository structure..."
+        
+        # Check required files
+        required_files=("utils.py" "regression.py" "requirements.txt" "README.md")
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "$file exists"
+          else
+            echo "$file missing"
+            exit 1
+          fi
+        done
+        
+        # Check .github/workflows directory
+        if [ -d ".github/workflows" ]; then
+          echo ".github/workflows directory exists"
+        else
+          echo ".github/workflows directory missing"
+          exit 1
+        fi
+        
+        # Check CI workflow file
+        if [ -f ".github/workflows/ci.yml" ]; then
+          echo "ci.yml workflow file exists"
+        else
+          echo "ci.yml workflow file missing"
+          exit 1
+        fi
+        
+        echo "Repository structure validation passed"
+
+  model-performance:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run performance benchmark
+      run: |
+        echo "Running performance benchmark..."
+        export ENABLE_HYPERPARAMETER_TUNING=false
+        python regression.py > performance_log.txt 2>&1
+        
+        # Extract key metrics from log
+        echo "=== PERFORMANCE SUMMARY ===" >> performance_summary.txt
+        grep -i "results:" performance_log.txt >> performance_summary.txt || true
+        grep -i "mse:" performance_log.txt >> performance_summary.txt || true
+        grep -i "r²:" performance_log.txt >> performance_summary.txt || true
+        
+        # Display summary
+        if [ -f "performance_summary.txt" ]; then
+          cat performance_summary.txt
+        fi
+    
+    - name: Performance validation
+      run: |
+        python << 'EOF'
+        import pandas as pd
+        import sys
+        
+        try:
+            # Check if results file exists
+            #if not os.path.exists('basic_model_results.csv'):
+            #    print("❌ No results file found")
+            #    sys.exit(1)
+            
+            # Load results
+            df = pd.read_csv('basic_model_results.csv')
+            
+            # Validate performance thresholds
+            print("Performance Validation:")
+            
+            for _, row in df.iterrows():
+                model_name = row['Model']
+                test_r2 = row['Test_R2']
+                test_mse = row['Test_MSE']
+                
+                print(f"{model_name}:")
+                print(f"  R² Score: {test_r2:.4f}")
+                print(f"  MSE: {test_mse:.4f}")
+                
+                # Basic validation - R² should be positive for reasonable models
+                if test_r2 < 0:
+                    print(f"⚠️  Warning: {model_name} has negative R² score")
+                elif test_r2 > 0.5:
+                    print(f"{model_name} shows good performance (R² > 0.5)")
+                else:
+                    print(f" {model_name} shows moderate performance")
+            
+            print("✅ Performance validation completed")
+            
+        except Exception as e:
+            print(f"Performance validation failed: {e}")
+            sys.exit(1)
+        EOF
+    
+    - name: Upload performance logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-logs
+        path: |
+          performance_log.txt
+          performance_summary.txt
+        retention-days: 30xx`

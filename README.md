@@ -1,1 +1,4 @@
-# mlops_assignment1
+This branch contains code that performs comparison between three different regression models namely Ridge, Random Forest, Lasso and SVR for the dependent variable which is the house price available in Boston Housing Dataset. The comparison is performed based on Mean Square Error(MSE) and R square. CI/CI pipeline is automated using GitHub Actions and is triggered with every push operation.
+Usage: Checkout the code and run the following: 
+pip install -r requirements.txt 
+python regression.py

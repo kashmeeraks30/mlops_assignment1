@@ -11,6 +11,9 @@ from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_sc
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.svm import SVR
+from sklearn.linear_model import Lasso, LassoCV
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 import warnings
 warnings.filterwarnings('ignore')
@@ -32,7 +35,6 @@ def load_data():
         # now we split this into data and target
         data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
         target = raw_df.values[1::2, 2]
-        # These are the Feature names based on the original dataset
         feature_names = [
         'CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE',
         'DIS', 'RAD', 'TAX', 'PTRATIO','B', 'LSTAT'
@@ -43,7 +45,7 @@ def load_data():
         X = pd.DataFrame(data, columns=feature_names)
         y = pd.Series(target, name='MEDV')
         #df[’MEDV’] = target # here MEDV is our target variable
-        print("✓ Boston Housing dataset loaded successfully")
+        print("Boston Housing dataset loaded successfully")
         print(f"Dataset shape: {X.shape}")
         print(f"Target variable: {y.name}")
         return X,y,feature_names
@@ -116,9 +118,10 @@ def preprocess_data(X, y, test_size=0.2, random_state=42, scale_features=True):
 def get_regression_models():
  
     models = {
-        'Linear Regression': LinearRegression(),
+        'Ridge': Ridge(),
         'Random Forest': RandomForestRegressor(random_state=42),
-        'Gradient Boosting': GradientBoostingRegressor(random_state=42)
+        'Lasso': Lasso(),
+        'SVR': SVR(),
     }
     return models
 
@@ -200,20 +203,30 @@ def get_hyperparameter_grids():
     
     """
     param_grids = {
-        'Linear Regression': {
+        'Ridge': {
+            'alpha': [0.001, 0.01, 0.1, 1, 10, 100, 1000],
             'fit_intercept': [True, False],
-            'positive': [True, False]
+            'solver': ['auto', 'svd', 'cholesky', 'lsqr']
         },
         'Random Forest': {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [None, 10, 20, 30],
-            'min_samples_split': [2, 5, 10]
+            'n_estimators': [100, 200],
+            'max_depth': [None, 10, 20],
+            'min_samples_split': [2, 5],
+            'min_samples_leaf': [1,2],
+            'max_features': ['sqrt']
         },
-        'Gradient Boosting': {
-            'n_estimators': [50, 100, 200],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'max_depth': [3, 5, 7]
-        }
+        'Lasso': {
+            'alpha': [0.0001, 0.001, 0.01, 0.1, 1, 10],
+            'fit_intercept': [True, False],
+            'selection': ['cyclic', 'random'],
+            'max_iter': [1000, 5000, 10000]
+        },
+       'SVR': {
+            'C': [0.1, 1, 10, 100],
+            'gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
+            'epsilon': [0.01, 0.1, 0.2, 0.5],
+            'kernel': ['rbf', 'linear', 'poly']
+        },
     }
     return param_grids
 
@@ -232,13 +245,25 @@ def hyperparameter_tuning(models, param_grids, X_train, y_train, cv=5):
         # Get parameter grid
         param_grid = param_grids.get(name, {})
         
-        if not param_grid:
-            print(f"No parameter grid found for {name}, using default parameters")
-            best_models[name] = model
-            continue
+        #if not param_grid:
+        #    print(f"No parameter grid found for {name}, using default parameters")
+        #    best_models[name] = model
+        #    continue
         
+        if name == 'SVR':
+            from sklearn.model_selection import RandomizedSearchCV
+            grid_search = RandomizedSearchCV(
+                model,
+                param_grid,
+                n_iter=30,  # Limit SVR to 30 random combinations
+                cv=cv,
+                scoring='neg_mean_squared_error',
+                n_jobs=-1,
+                random_state=42
+            )
+        else:
         # Perform grid search
-        grid_search = GridSearchCV(
+            grid_search = GridSearchCV(
             model, 
             param_grid, 
             cv=cv, 

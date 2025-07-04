@@ -2,8 +2,7 @@ name: Boston Housing Regression CI
 
 on:
   push:
-    #branches: [ main, reg_branch, hyper_branch ]
-    branches: [ main, reg_branch ]
+    branches: [ main, reg_branch, hyper_branch ]
   pull_request:
     branches: [ main ]
 
@@ -44,13 +43,13 @@ jobs:
       if: github.ref == 'refs/heads/reg_branch' || github.ref == 'refs/heads/main'
       run: |
         export ENABLE_HYPERPARAMETER_TUNING=false
-        python regression.py basic
+        python regression.py
     
-   # - name: Run hyperparameter tuning (hyper_branch functionality)
-   #   if: github.ref == 'refs/heads/hyper_branch' || github.ref == 'refs/heads/main'
-   #   run: |
-   #     export ENABLE_HYPERPARAMETER_TUNING=true
-   #     timeout 300 python regression.py tuned || echo "Hyperparameter tuning completed or timed out"
+    - name: Run hyperparameter tuning (hyper_branch functionality)
+      if: github.ref == 'refs/heads/hyper_branch' || github.ref == 'refs/heads/main'
+      run: |
+        export ENABLE_HYPERPARAMETER_TUNING=true
+        python regression.py
     
     - name: Check output files
       run: |

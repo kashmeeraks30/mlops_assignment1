@@ -100,10 +100,10 @@ jobs:
         fi
         
         # Check CI workflow file
-        if [ -f ".github/workflows/jobs.yml" ]; then
-          echo "jobs.yml workflow file exists"
+        if [ -f ".github/workflows/ci.yml" ]; then
+          echo "ci.yml workflow file exists"
         else
-          echo "jobs.yml workflow file missing"
+          echo "ci.yml workflow file missing"
           exit 1
         fi
         
